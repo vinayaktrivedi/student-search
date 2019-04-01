@@ -6,6 +6,7 @@ import requests
 import sqlite3
 conn = sqlite3.connect('../database/students.db')
 c = conn.cursor()
+import sys
 
 s = requests.Session()
 s.get("https://oa.cc.iitk.ac.in/Oa/Jsp/Main_Frameset.jsp")
@@ -107,11 +108,22 @@ for link in soup.select('.DivContent'):
     print("Total: {}".format(TOTAL))
 process_response_soup(soup, c)
 print("Processed 12")
-for i in range(12, TOTAL+1, 12):
-    payload['recpos'] = i
+
+if(len(sys.argv)==1):
+    batches = int(TOTAL/12)
+else:
+    batches = int(sys.argv[1])
+    if(batches==1):
+        conn.close()
+        exit(1)
+
+for i in range(1, batches, 1):
+    index = i*12
+    payload['recpos'] = index
+    print(index)
     r = s.post("https://oa.cc.iitk.ac.in/Oa/Jsp/OAServices/IITk_SrchStudRoll_new.jsp", headers=headers, data=payload)
     soup = BeautifulSoup(r.text, 'html.parser')
     process_response_soup(soup, c)
-    print("Processed {}".format(i + 12))
+    print("Processed {}".format(index + 12))
     conn.commit()
 conn.close()
